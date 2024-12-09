@@ -29,7 +29,7 @@ function scene:create(event)
     uiGroup = display.newGroup()
     gameGroup = display.newGroup()
 
-    crateLandingSound = audio.loadSound("crateLanding.wav")
+    crateLandingSound = audio.loadSound("sounds/crateLanding.wav")
 
     physics.start()
     physics.pause()
