@@ -91,6 +91,11 @@ function M.showPauseMenu(sceneGroup, stopwatchTimer, currentScene)
         display.remove(pauseGroup)
         -- Remove the current scene
         composer.removeScene(currentScene)
+        -- Check if the current scene exists before attempting to destroy it
+        local scene = composer.getScene(currentScene)
+        if scene and scene.destroy then
+            scene:destroy()
+        end
         -- Go to the main menu scene
         composer.gotoScene("menu", { effect = "fade", time = 500 })
     end

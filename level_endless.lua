@@ -38,7 +38,7 @@ function scene:create(event)
     background:setFillColor(0.5, 0.5, 1)
     sceneGroup:insert(background)
 
-    overlay = display.newImage("bg_splash.png")
+    overlay = display.newImage("images/bg_splash.png")
     overlay.anchorX = 0.5
     overlay.anchorY = 0.5
     overlay.x = display.contentCenterX
@@ -51,7 +51,7 @@ function scene:create(event)
     overlay:scale(scale, scale)
     sceneGroup:insert(overlay)
 
-    local platform = display.newImageRect("platform.png", 320, 193)
+    local platform = display.newImageRect("images/platform.png", 320, 193)
     platform.anchorX = 0.5
     platform.anchorY = 1
     platform.x, platform.y = display.contentCenterX, display.actualContentHeight + display.screenOriginY
@@ -114,7 +114,8 @@ function scene:create(event)
             display.getCurrentStage():setFocus(crate)
             crate.touchOffsetX = event.x - crate.x
             crate.touchOffsetY = event.y - crate.y
-            crate.bodyType = "kinematic"
+            crate.bodyType = "dynamic" -- Change to dynamic when the user starts dragging
+            crate.isFixedRotation = false -- Allow rotation for more natural physics
             crate:setLinearVelocity(0, 0)
             crate.angularVelocity = 0
             physics.removeBody(crate)
@@ -127,8 +128,8 @@ function scene:create(event)
             end
         elseif event.phase == "ended" or event.phase == "cancelled" then
             display.getCurrentStage():setFocus(nil)
-            crate.bodyType = "dynamic"
-            crate.isFixedRotation = false
+            crate.bodyType = "dynamic" -- Change to dynamic when the user starts dragging
+            crate.isFixedRotation = false -- Allow rotation for more natural physics
             physics.removeBody(crate)
             physics.addBody(crate, { density = 0.3, friction = 0.2, bounce = 0.05, shape = crateShape, gravityScale = 0.005 })
         end
@@ -219,7 +220,7 @@ function scene:create(event)
         crate:addEventListener("collision", crate)
     end
     
-    local crateImages = { "crate.png", "crate_bl.png", "crate_b.png", "crate_r.png", "crate_g.png" }
+    local crateImages = { "images/crate.png", "images/crate_bl.png", "images/crate_b.png", "images/crate_r.png", "images/crate_g.png" }
     
     function createCrate()
         local crateWidth, crateHeight = 39, 45
@@ -232,17 +233,47 @@ function scene:create(event)
         crate.name = "crate"
         crate.isActive = true
     
-        physics.addBody(crate, { density = 0.3, friction = 0.2, bounce = 0.05, shape = largeCrateShape, gravityScale = 0.005 })
-        gameGroup:insert(crate)
-        table.insert(crates, crate)
-        crateCount = crateCount + 1
-        activeCrate = crate
+        crate.bodyType = "kinematic" -- Make the crate kinematic initially
+        crate.isSensor = false -- Ensure collision detection
+        crate:setLinearVelocity(0, 250) -- Set a constant linear downward velocity
     
-        crate:addEventListener("touch", onCrateTouch)
+        -- Add touch listener to the crate
+        crate:addEventListener("touch", function(event)
+            if event.phase == "began" then
+                display.getCurrentStage():setFocus(crate)
+                crate.touchOffsetX = event.x - crate.x
+                crate.touchOffsetY = event.y - crate.y
+                crate.bodyType = "dynamic" -- Change to dynamic when the user starts dragging
+                crate.isFixedRotation = false -- Allow rotation for more natural physics
+                crate:setLinearVelocity(0, 0) -- Stop any existing motion
+                crate.angularVelocity = 0 -- Stop any existing rotation
+            elseif event.phase == "moved" then
+                if crate.touchOffsetX and crate.touchOffsetY then
+                    crate.x = event.x - crate.touchOffsetX
+                    crate.y = event.y - crate.touchOffsetY
+                    crate:setLinearVelocity(0, 0) -- Manually update the crate's position
+                end
+            elseif event.phase == "ended" or event.phase == "cancelled" then
+                display.getCurrentStage():setFocus(nil)
+                crate.bodyType = "dynamic" -- Make the crate dynamic to allow tipping
+                crate.isFixedRotation = false -- Allow rotation for more natural physics
+            end
+            return true
+        end)
     
         timer.performWithDelay(100, function()
             enableCrateCollision(crate)
         end)
+        crate:addEventListener("collision", function(self, event)
+            if event and event.phase == "began" and event.other == platform then
+                self.bodyType = "dynamic"
+                self.isFixedRotation = false
+                self.isSensor = false -- Ensure collision detection
+                self:setLinearVelocity(0, 0) -- Stop any existing motion
+                self.angularVelocity = 0 -- Stop any existing rotation
+            end
+        end)
+        physics.addBody(crate, { density = 0.3, friction = 0.2, bounce = 0.05, shape = largeCrateShape, gravityScale = 0.05 }) -- Adjusted gravityScale for slower falling
     end
     createCrate()
 
@@ -294,6 +325,15 @@ function scene:destroy(event)
     end
     audio.dispose(crateLandingSound)
     crateLandingSound = nil
+    -- Remove all crates and their physics bodies
+    for i = #crates, 1, -1 do
+        local crate = crates[i]
+        if crate then
+            crate:removeEventListener("collision", crate)
+            display.remove(crate)
+            crates[i] = nil
+        end
+    end
     package.loaded[physics] = nil
     physics = nil
 end

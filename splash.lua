@@ -5,7 +5,7 @@ function scene:create(event)
     local sceneGroup = self.view
 
     -- display a background image
-    local background = display.newImage("splash.png")
+    local background = display.newImage("images/splash.png")
     background.anchorX = 0.5
     background.anchorY = 0.5
     background.x = display.contentCenterX

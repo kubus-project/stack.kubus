@@ -18,7 +18,7 @@ function scene:create(event)
     -- e.g. add display objects to 'sceneGroup', add touch listeners, etc.
 
     -- display a background image
-    local background = display.newImage("bg_menu.png")
+    local background = display.newImage("images/bg_menu.png")
     background.anchorX = 0
     background.anchorY = 0
     background.x = 0 + display.screenOriginX
@@ -34,11 +34,11 @@ function scene:create(event)
 
     -- List of image filenames and their corresponding actions
     local images = {
-        { filename = "name.png" },
-        { filename = "play.png", action = function() composer.gotoScene("level1", "fade", 500) end },
-        { filename = "endless.png", action = function() composer.gotoScene("level_endless", "fade", 500) end },
-        { filename = "settings.png", action = function() composer.gotoScene("settings", "fade", 500) end },
-        { filename = "exit.png", action = function() native.requestExit() end }
+        { filename = "images/name.png" },
+        { filename = "images/play.png", action = function() composer.gotoScene("level1", "fade", 500) end },
+        { filename = "images/endless.png", action = function() composer.gotoScene("level_endless", "fade", 500) end },
+        { filename = "images/settings.png", action = function() composer.gotoScene("settings", "fade", 500) end },
+        { filename = "images/exit.png", action = function() native.requestExit() end }
     }
 
     -- Insert images one on top of another but slightly offset to the right
